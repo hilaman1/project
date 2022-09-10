@@ -62,10 +62,28 @@ void get_points_from_input(FILE *ifp, double* points_arr){
     }
 }
 
+double** create_empty_mat(int n, int d){
+    /* creates an empty matrix from order nxd */
+    double **mat; 
+    double *p; 
+    p = calloc(n*d, sizeof(double));
+    if (p == NULL){
+        printf("An Error Has Occurred");
+        return NULL;
+    }
+    mat = calloc(n, sizeof(double*));
+    if (mat == NULL){
+        printf("An Error Has Occurred");
+        return NULL;
+    }
+    for (int i=0; i<n; i++){
+        mat[i] = p + i*d;
+    }
+    return mat;
+}
 
 double** convert_1D_arr_to_mat(double *points_arr, int n, int d){
     int i,j;
-    int *p; 
     double **points_mat;
     points_mat = create_empty_mat(n,d);
     if (points_mat == NULL){
@@ -80,25 +98,7 @@ double** convert_1D_arr_to_mat(double *points_arr, int n, int d){
     return points_mat;
 }
 
-double** create_empty_mat(int n, int d){
-    /* creates an empty matrix from order nxd */
-    double **mat; 
-    int *p; 
-    p = calloc(n*d, sizeof(int));
-    if (p == NULL){
-        printf("An Error Has Occurred");
-        return NULL;
-    }
-    mat = calloc(n, sizeof(int*));
-    if (mat == NULL){
-        printf("An Error Has Occurred");
-        return NULL;
-    }
-    for (int i=0; i<n; i++){
-        mat[i] = p + i*d;
-    }
-    return mat;
-}
+
 
 double L2_norm(double *x1, double *x2, int d){
     /* return L2 norm of x1 and x2 */
@@ -326,7 +326,7 @@ double** calc_P_mat(double **A, int n){
     double **P;
     int i,j; /* indices for Aij */
     double theta,t,c,s;
-    double *indices_max_abs;
+    int *indices_max_abs;
     
     indices_max_abs = get_max_not_in_diag(A, n); /* returns an array with 2 indices */
     i = indices_max_abs[0];
@@ -350,13 +350,27 @@ double** calc_P_mat(double **A, int n){
     return P;
 }
 
-int does_conv(double **A, double **PTAP){
-    int off_A, off_PTAP;
+double calc_off(double **A, int n){
+    double off = 0;
+
+    for (int i = 0; i < n; i++){
+        for (int j = 0; j < n; j++){
+            if (i != j){
+                off = off + A[i][j] * A[i][j];
+            }
+        }
+    }
+    return off;
+}
+
+int does_conv(double **A, double **PTAP, int n){
+    double off_A, off_PTAP;
     double epsilon = 0.00001;
 
-    off_A = calc_off(A);
-    off_PTAP = calc_off(PTAP); 
-    if ((off_A - off_PTAP) < epsilon){
+    off_A = calc_off(A, n);
+    off_PTAP = calc_off(PTAP, n); 
+
+    if ((off_A - off_PTAP) <= epsilon){
         return 1;
     }else{
         return 0;
@@ -400,7 +414,7 @@ double*** apply_Jacobi(double **A, int n, int d){
             return NULL;
         }
 
-        conv_flag = does_conv(A, PTAP);
+        conv_flag = does_conv(A, PTAP, n);
         A = PTAP; /* update A = A' */
         iteration_counter++;
     }
@@ -470,6 +484,7 @@ int main(int argc, char** argv){
     double *current_centroids;
     double **W_mat, **D_mat, **lnorm_mat;
     double **eigenvalues , **eigenvectors;
+    double ***eigen;
     int i, j;
     int iteration_counter;
     int converge_flag;
@@ -514,7 +529,7 @@ int main(int argc, char** argv){
     }
 
     if (strcmp(goal,"wam") == 0){
-        W_mat = create_w_mat(points, n);
+        W_mat = create_W_mat(points, n, d);
         if (W_mat == NULL){
             printf("An Error Has Occurred");
             return 1;
@@ -523,7 +538,7 @@ int main(int argc, char** argv){
     }
     
     else if (strcmp(goal,"ddg") == 0){
-        W_mat = create_w_mat(points, n, d);
+        W_mat = create_W_mat(points, n, d);
         if (W_mat == NULL){
             printf("An Error Has Occurred");
             return 1;
@@ -545,7 +560,9 @@ int main(int argc, char** argv){
         print_mat(lnorm_mat, n, n);
     }
     else if (strcmp(goal,"jacobi") == 0){
-        eigenvalues, eigenvectors = apply_Jacobi(points, n, d);
+        eigen = apply_Jacobi(points, n, d);
+        eigenvalues = eigen[0];
+        eigenvectors = eigen[1];
         print_eigenvalues(eigenvalues, n, n);
         print_mat(eigenvectors, n, n);
     }

@@ -7,6 +7,8 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <string.h>
+#include "spkmeans.h"
+
 
 /* creating a class for creating clusters */
 typedef struct
@@ -65,7 +67,7 @@ void free_mat(double** mat, int row){
     free(row);
 }
 
-static **double create_empty_mat(int mat_order){
+static double** create_empty_mat(int mat_order){
     /* creates an empty matrix from order nxn */
     double **mat; 
     int mat_order;
@@ -531,8 +533,7 @@ static PyObject* apply_Jacobi(PyObject* self, PyObject *args){
         return NULL;
     }
     A = convert_Py_to_C_mat(py_points, n, d);
-    if (A == NULL)
-    {
+    if (A == NULL){
         return NULL;
     }
 
