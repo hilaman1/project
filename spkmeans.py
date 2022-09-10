@@ -1,4 +1,3 @@
-import math
 import sys
 import numpy as np
 import pandas as pd
@@ -75,8 +74,7 @@ def main():
     points2cluster = df.values.tolist()
     # All implementations of the different goals
     # must be performed by calling the C extension
-    spk_module_output = spk.fit(points2cluster, initialized_centroids.tolist(), max_iter, n, d, k,
-                                goal)  # call spkmeans C module
+    spk_module_output = spk.kmeans(points2cluster, initialized_centroids.tolist(), max_iter, n, d, k)  # call spkmeans C module
     if spk_module_output is None:
         print("An Error Has Occurred")
         sys.exit(1)
@@ -84,7 +82,6 @@ def main():
     if goal == 'spk':
         final_centroids = np.array(spk_module_output)
         final_centroids = np.round(final_centroids, 4)
-        # print output
         for i in range(len(indices_of_chosen_centroids)):
             if i != (len(indices_of_chosen_centroids) - 1):
                 print(indices_of_chosen_centroids[i], end=",")
@@ -100,10 +97,17 @@ def main():
         for eigenvector in eigenvectors:  # TODO change that when write C module
             np.append(eigenvectors_mat, eigenvector)
         print(eigenvectors_mat)
-    else:
-        matrix2output = np.array(spk_module_output)
-        for row in matrix2output:
-            print(row)
+    elif goal == 'wam':
+        wam_mat = spk.calc_WAM(points2cluster, n, d)  # call spkmeans C module
+    elif goal == 'ddg':
+        dd_mat = spk.calc_DDM(points2cluster, n, d)  # call spkmeans C module
+    elif goal == 'lnorm':
+        lnorm_mat = spk.calc_lnorm(points2cluster, n, d)  # call spkmeans C module
+    elif goal == 'jacobi':
+        # input is a symmetric matrix
+        Jacobi_output = spk.apply_Jacobi(points2cluster, n, d)  # call spkmeans C module
+
+
 
 
 main()
