@@ -8,7 +8,8 @@ max_iter = 300
 
 
 def get_CMD_input():
-    if (len(sys.argv) < 3) or (len(sys.argv) > 4):
+    # get output from user from cmd
+    if (len(sys.argv) != 4):
         print("Invalid Input!")
         sys.exit(1)
     if len(sys.argv) == 4:
@@ -56,31 +57,45 @@ def kmeans_pp(points, n, d, k):
         rand_ind = np.random.choice(n, p=P_xl)
         indices_of_chosen_centroids[current_ind] = rand_ind
         initialized_centroids = np.append(initialized_centroids, [points[rand_ind]], axis=0)
-
     return initialized_centroids, indices_of_chosen_centroids
+
+def print_mat(mat_as_list):
+    # print matrix in the wanted format
+    for row in mat_as_list:
+         print(','.join([format(row[i], ".4f") for i in range(len(row))]))
+
+def print_eigenval(mat_as_list):
+    # print eigenvalues in the wanted format
+    print(','.join([format(mat_as_list[i][i], ".4f") for i in range(len(list))]))
 
 
 def main():
     goal, k, file_name = get_CMD_input()
-    df = pd.read_csv(file_name, header=None)
-    df = df.sort_values([0])
-    points = df.to_numpy()
-    n = df.shape[0]
-    d = df.shape[1]
-    if k > n:
+    if arguments.goal not in {"spk", "lnorm", "wam", "ddg", "jacobi"}:
         print("Invalid Input!")
         sys.exit(1)
-    initialized_centroids, indices_of_chosen_centroids = kmeans_pp(points, n, d, k)
-    points2cluster = df.values.tolist()
-    # All implementations of the different goals
-    # must be performed by calling the C extension
-    spk_module_output = spk.kmeans(points2cluster, initialized_centroids.tolist(), max_iter, n, d, k)  # call spkmeans C module
-    if spk_module_output is None:
-        print("An Error Has Occurred")
-        sys.exit(1)
-
-    if goal == 'spk':
-        final_centroids = np.array(spk_module_output)
+    df = pd.read_csv(file_name, header=None)
+    df = df.sort_values([0])
+    n = df.shape[0]
+    d = df.shape[1]
+    points = df.to_numpy().tolist()
+    # implementations of the different goals
+    if goal == "spk":
+        if k == 1 or k < 0:
+            print("Invalid Input!")
+            sys.exit(1)
+        if arguments.k == 0:
+            spk_output = spk.calc_T(points, n, d, k)  # call spkmeans C module
+            updated_k = len(spk_output[0])
+            if (updated_k == 1):
+                print("An Error Has Occurred")
+                sys.exit(1)
+        else:
+            updated_k = k
+            spk_output = spk_output = spk.calc_T(points, n, d, updated_k)
+        initialized_centroids, indices_of_chosen_centroids = kmeans_pp(spk_output, n, d, T_mat.shape[1])
+        final_centroids = spk.kmeans(points, initialized_centroids.tolist(), max_iter, n, d,
+                                       updated_k)  # call spkmeans C module
         final_centroids = np.round(final_centroids, 4)
         for i in range(len(indices_of_chosen_centroids)):
             if i != (len(indices_of_chosen_centroids) - 1):
@@ -89,25 +104,31 @@ def main():
                 print(indices_of_chosen_centroids[i])
         for centroid in final_centroids.tolist():
             print(','.join([format(centroid[j], ".4f") for j in range(len(centroid))]))
-    elif goal == 'Jacobi':
-        eigenvalues = np.array(spk_module_output)[0]
-        eigenvectors = np.array(spk_module_output)[1]
-        eigenvectors_mat = np.zeros(eigenvectors[0].shape)
-        print(eigenvalues)
-        for eigenvector in eigenvectors:  # TODO change that when write C module
-            np.append(eigenvectors_mat, eigenvector)
-        print(eigenvectors_mat)
-    elif goal == 'wam':
-        wam_mat = spk.calc_WAM(points2cluster, n, d)  # call spkmeans C module
-    elif goal == 'ddg':
-        dd_mat = spk.calc_DDM(points2cluster, n, d)  # call spkmeans C module
-    elif goal == 'lnorm':
-        lnorm_mat = spk.calc_lnorm(points2cluster, n, d)  # call spkmeans C module
-    elif goal == 'jacobi':
+
+    elif goal == "wam":
+        wam_mat = spk.calc_WAM(points, n, d)  # call C module
+        if wam_mat == None:
+            print("An Error Has Occurred")
+            sys.exit(1)
+        print_mat(wam_mat)
+    elif goal == "ddg":
+        dd_mat = spk.calc_DDM(points, n, d)  # call C module
+        if dd_mat == None:
+            print("An Error Has Occurred")
+            sys.exit(1)
+        print_mat(dd_mat)
+    elif goal == "lnorm":
+        lnorm_mat = spk.calc_lnorm(points, n, d)  # call C module
+        if lnorm_mat == None:
+            print("An Error Has Occurred")
+            sys.exit(1)
+        print_mat(lnorm_mat)
+    elif goal == "jacobi":
         # input is a symmetric matrix
-        Jacobi_output = spk.apply_Jacobi(points2cluster, n, d)  # call spkmeans C module
-
-
-
-
+        Jacobi_output = spk.apply_Jacobi(points, n, d)  # call C module
+        if Jacobi_output == None:
+            print("An Error Has Occurred")
+            sys.exit(1)
+        print_eigenval(Jacobi_output[0])
+        print_mat(Jacobi_output[1])
 main()

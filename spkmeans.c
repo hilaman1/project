@@ -66,6 +66,7 @@ double** create_empty_mat(int n, int d){
     /* creates an empty matrix from order nxd */
     double **mat; 
     double *p; 
+    int i;
     p = calloc(n*d, sizeof(double));
     if (p == NULL){
         printf("An Error Has Occurred");
@@ -76,7 +77,7 @@ double** create_empty_mat(int n, int d){
         printf("An Error Has Occurred");
         return NULL;
     }
-    for (int i=0; i<n; i++){
+    for ( i=0; i<n; i++){
         mat[i] = p + i*d;
     }
     return mat;
@@ -90,8 +91,8 @@ double** convert_1D_arr_to_mat(double *points_arr, int n, int d){
         printf("An Error Has Occurred");
         return NULL;
     }
-    for(int i = 0; i < n ;i++){
-        for(int j = 0; j < d; j++){
+    for( i = 0; i < n ;i++){
+        for( j = 0; j < d; j++){
             points_mat[i][j] = points_arr[i * d + j];
         }
     }
@@ -104,7 +105,8 @@ double L2_norm(double *x1, double *x2, int d){
     /* return L2 norm of x1 and x2 */
     double sum = 0;
     double delta;
-    for(int i = 0; i < d ;i++)
+    int i;
+    for( i = 0; i < d ;i++)
     {
         delta = pow((x1[i] - x2[i]), 2);
         sum += delta;
@@ -118,14 +120,15 @@ double** create_W_mat(double **points, int n, int d){
     double **W;
     double delta;
     double temp_val;
+    int i,j;
 
     W = create_empty_mat(n,n);
     if (W == NULL){
         return NULL;
     }
 
-    for (int i = 0; i < n; ++i){
-        for(int j = 0; j < n; ++j){
+    for ( i = 0; i < n; ++i){
+        for( j = 0; j < n; ++j){
             if (i == j){
                 W[i][j] = 0;
             }
@@ -141,8 +144,9 @@ double** create_W_mat(double **points, int n, int d){
 
 void print_mat(double **mat, int n, int d){
     /* prints the matrix values */
-    for (int i = 0; i < n; i++){
-        for (int j = 0; j < d; j++){
+    int i,j;
+    for ( i = 0; i < n; i++){
+        for ( j = 0; j < d; j++){
             printf("%.4f", mat[i][j]);
             if (j < (d - 1)){
                 printf(",");
@@ -156,7 +160,8 @@ void print_mat(double **mat, int n, int d){
 
 void print_eigenvalues(double **eigenvalues_mat, int n, int d){
     /* prints the eigenvalues */
-    for (int i = 0; i < n; i++){
+    int i;
+    for ( i = 0; i < n; i++){
         printf("%.4f", eigenvalues_mat[i][i]);
         if (i < (d - 1)){
             printf(",");
@@ -169,15 +174,16 @@ double** create_DD_mat(double **W_mat, int n, int d){
     /* return a mat D s.t D_mat[i][j] = Diagonal Degree Matrix */
     double **D_mat;
     double d_i;
+    int i,j;
 
     D_mat = create_empty_mat(n, n);
     if (D_mat == NULL){
         return NULL;
     }
 
-    for (int i = 0; i < n; i++){
+    for ( i = 0; i < n; i++){
         d_i = 0;
-        for (int j = 0; j < d; j++){
+        for ( j = 0; j < d; j++){
             d_i += W_mat[i][j];
         }
         D_mat[i][i] = 1/sqrt(d_i);
@@ -209,7 +215,8 @@ double** mat_mult(double **mat1, double **mat2, int n){
 }
 
 void free_mat(double** mat, int n){
-    for(int i = 0; i < n; i++){
+    int i;
+    for( i = 0; i < n; i++){
         free(mat[i]);
     }
     free(mat);
@@ -250,17 +257,18 @@ double** lnorm_calc(double **points, int n, int d){
     return mult;
 }
 
-static double** create_I_mat(int n){
+double** create_I_mat(int n){
     /* return an identity matrix of size n */
     double ** I_mat;
+    int i,j;
     I_mat = create_empty_mat(n,n);
     if (I_mat == NULL)
     {
         return NULL;
     }
 
-    for (int i = 0; i < n; i++){
-        for (int j = 0; j < n; j++){
+    for ( i = 0; i < n; i++){
+        for ( j = 0; j < n; j++){
             if (i == j){
                 I_mat[i][j] = 1;
             }else{
@@ -276,14 +284,15 @@ int* get_max_not_in_diag(double** sym_mat, int n){
     int* indexes_to_return;
     int coord_i, coord_j;
     double max_abs = 0;
+    int i,j;
 
     indexes_to_return = (int*) calloc(2, sizeof(int));
     if (indexes_to_return == NULL){
         return NULL;
     }
 
-    for(int i = 0; i < n; i++){
-        for(int j = i; j < n; j++){
+    for( i = 0; i < n; i++){
+        for( j = i; j < n; j++){
             if ((i != j) && (fabs(sym_mat[i][j]) > fabs(max_abs))){
                 max_abs = sym_mat[i][j];
                 coord_i = i;
@@ -310,12 +319,13 @@ double sign(double num){
 double** transpose(double** mat, int n){
     /* recieves a matrix dimantion and calculates the transpose of it */
     double** transpose;
+    int i,j;
     transpose = create_empty_mat(n, n);
     if (transpose == NULL){
         return NULL;
     }
-    for(int i = 0; i < n; i++){
-        for(int j = 0; j < n; j++){
+    for( i = 0; i < n; i++){
+        for( j = 0; j < n; j++){
             transpose[i][j] = mat[j][i];
         }
     }
@@ -351,10 +361,11 @@ double** calc_P_mat(double **A, int n){
 }
 
 double calc_off(double **A, int n){
+    int i,j;
     double off = 0;
 
-    for (int i = 0; i < n; i++){
-        for (int j = 0; j < n; j++){
+    for ( i = 0; i < n; i++){
+        for ( j = 0; j < n; j++){
             if (i != j){
                 off = off + A[i][j] * A[i][j];
             }
@@ -377,13 +388,9 @@ int does_conv(double **A, double **PTAP, int n){
     }
 }
 
-double*** apply_Jacobi(double **A, int n, int d){
+double*** apply_Jacobi(double **A, int n){
     double **P, **P_T, **PTAP, **last_V, **V; 
- 
-    int i,j; /* indices for Aij */
     int conv_flag = 0;
-    int off_A, off_Anew;
-    double epsilon = 0.00001;
     int iteration_counter = 0;
     int max_iter = 100;
     double ***return_arr;
@@ -450,17 +457,18 @@ int get_k(double **A, double **V, int n){
     double delta;
     double max_delta = 0;
     int k;
+    int i,j;
 
     eigenvector_object *eigenvectors;
     eigenvectors = (eigenvector_object*) calloc(n, sizeof(eigenvector_object));
-    for (int i = 0; i < n; i++){
+    for ( i = 0; i < n; i++){
         eigenvectors[i].eigenvector = V[i];
         eigenvectors[i].eigenvalue = A[i][i];
     }
     
     qsort(eigenvectors, n, sizeof(eigenvector_object), compare_vectors);
-    for (int i = 0; i < n - 1; i++){
-        delta = fabs(eigenvectors[i].eigenvalue - eigenvectors[i+1].eigenvalue);
+    for ( j = 0; j < n - 1; j++){
+        delta = fabs(eigenvectors[j].eigenvalue - eigenvectors[j+1].eigenvalue);
         if (delta > max_delta){
             max_delta = delta;
         }
@@ -476,28 +484,16 @@ int main(int argc, char** argv){
     
     int d; /* the dimention of the given points */
     int n;  /* the number of points, equals to the number of raws in input_file */
-    int k;
     char* input_filename;
-    char* goal;
     double *points_arr;
     double **points;
-    double *current_centroids;
     double **W_mat, **D_mat, **lnorm_mat;
     double **eigenvalues , **eigenvectors;
     double ***eigen;
-    int i, j;
-    int iteration_counter;
-    int converge_flag;
-    double epsilon;
-
-    epsilon = 0.00001;
-    converge_flag = 0;
     n = 0;
-    iteration_counter = 0;
 
     /* checking if the input is valid */
     if (argc == 3){ /* we include the program's name and there are 4 arguments if max_iter is provided */
-        goal = argv[1];
         input_filename = argv[2];
     }else{
         printf("Invalid Input!");
@@ -528,7 +524,7 @@ int main(int argc, char** argv){
         return 1;
     }
 
-    if (strcmp(goal,"wam") == 0){
+    if (strcmp(argv[1],"wam") == 0){
         W_mat = create_W_mat(points, n, d);
         if (W_mat == NULL){
             printf("An Error Has Occurred");
@@ -537,7 +533,7 @@ int main(int argc, char** argv){
         print_mat(W_mat, n, n);
     }
     
-    else if (strcmp(goal,"ddg") == 0){
+    else if (strcmp(argv[1],"ddg") == 0){
         W_mat = create_W_mat(points, n, d);
         if (W_mat == NULL){
             printf("An Error Has Occurred");
@@ -551,7 +547,7 @@ int main(int argc, char** argv){
         print_mat(D_mat, n, n);
     }
 
-    else if (strcmp(goal,"lnorm") == 0){
+    else if (strcmp(argv[1],"lnorm") == 0){
         lnorm_mat = lnorm_calc(points, n, d);
         if (lnorm_mat == NULL){
             printf("An Error Has Occurred");
@@ -559,8 +555,8 @@ int main(int argc, char** argv){
         }
         print_mat(lnorm_mat, n, n);
     }
-    else if (strcmp(goal,"jacobi") == 0){
-        eigen = apply_Jacobi(points, n, d);
+    else if (strcmp(argv[1],"jacobi") == 0){
+        eigen = apply_Jacobi(points, n);
         eigenvalues = eigen[0];
         eigenvectors = eigen[1];
         print_eigenvalues(eigenvalues, n, n);
@@ -572,7 +568,6 @@ int main(int argc, char** argv){
     }
     
     free(input_filename);
-    free(goal);
     free(points_arr);
     free_mat(points, n);
     free_mat(W_mat, n);
@@ -582,4 +577,75 @@ int main(int argc, char** argv){
     free_mat(eigenvectors, n);
 
     return 0;
+}
+
+
+double* get_eigen_val(double **eigenValuesMat, int cnt){
+    double* res;
+    int i;
+
+    res = (double*) calloc(cnt, sizeof(double));
+    if (res == NULL)
+    {
+        return NULL;
+    }
+    for (i = 0; i < cnt; i++){
+        res[i] = eigenValuesMat[i][i];
+    }
+    return res;
+}
+
+
+
+double** get_U_mat(eigenvector_object *eigen_pairs, int cnt, int clust_num){
+    /* return U matrix containing getting the first k columns of V by eigen value order*/
+    int i,j;
+    double **uMat = create_empty_mat(cnt, clust_num);
+    if (uMat == NULL){
+        return NULL;
+    }
+    for(i = 0; i < cnt; i++){
+        for(j = 0; j < clust_num; j++){
+            uMat[i][j] = eigen_pairs[j].eigenvector[i];
+        }
+    }
+    return uMat;
+}
+
+
+double get_row_norm(double *row_vec,int vecDim){
+    /* calc the norm of a vector*/
+    int i;
+    double sum = 0;
+    for(i = 0; i < vecDim; i++){
+        sum += pow(row_vec[i], 2);
+    }
+    return sqrt(sum);
+}
+
+
+void normalize(double **uMat, int cnt, int clust_num){
+    /* normalizing U matrix using get_row_norm function*/
+    int i, j;
+    double rowNorm;
+    for(i = 0; i < cnt; i++){
+        rowNorm = get_row_norm(uMat[i], clust_num); /*changed*/
+        if (rowNorm != 0) {
+            for(j = 0; j < clust_num; j++){
+                uMat[i][j] /= rowNorm;
+            }
+        }
+    }
+}
+
+
+double** get_T_mat(eigenvector_object *eigen_pairs, int cnt, int clust_num){
+    double** tMat;
+    tMat = get_U_mat(eigen_pairs, cnt, clust_num);
+    if (tMat == NULL)
+    {
+        return NULL;
+    }
+    normalize(tMat, cnt, clust_num);
+    return tMat;
 }
