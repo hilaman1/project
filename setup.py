@@ -1,6 +1,6 @@
 from setuptools import setup, Extension
 
-setup(name='mykmeanssp',
-      version='0.1.0',
-      description="kmeans++ C-API",
-      ext_modules=[Extension('mykmeanssp', sources=['spkmeansmodule.c'])])
+setup(name="myspkmeans",
+      version="1",
+      description="Implementation of spkmeans",
+      ext_modules=[Extension("myspkmeans", sources=["spkmeansmodule.c", "spkmeans.c"])])
