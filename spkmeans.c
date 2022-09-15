@@ -5,7 +5,7 @@
 #include <ctype.h>
 #include <string.h>
 
-
+/* a class that saves each eigenvector with its eigenvalue */
 typedef struct
 {
     double eigenvalue;
@@ -293,9 +293,8 @@ double** create_I_mat(int n){
 }
 
 int* get_max_not_in_diag(double **sym_mat, int n){
-    /* calculates the Aij entery for pivoting */
+    /* calculates the Aij entery for pivoting and returns its index*/
     int *coordinates;
-    /* initialization for if it's a diagonal matrix */
     int coord_i = 0;
     int coord_j = 0;
 
@@ -452,7 +451,6 @@ double*** apply_Jacobi(double **A, int n){
 
 
     while (conv_flag != 1 && iteration_counter < max_iter){
-        /* calculate P mat */
         P = calc_P_mat(A_new, n);
         if (P == NULL){
             return NULL;
@@ -572,8 +570,7 @@ int main(int argc, char** argv){
         printf("Invalid Input!");
         return 1;                                                                                                                                                  
     }
-    if (strcmp(argv[1], "wam") != 0  && strcmp(argv[1], "ddg") != 0 && strcmp(argv[1], "lnorm") != 0 && strcmp(argv[1], "jacobi") != 0)
-    {
+    if (strcmp(argv[1], "wam") != 0  && strcmp(argv[1], "ddg") != 0 && strcmp(argv[1], "lnorm") != 0 && strcmp(argv[1], "jacobi") != 0){
         printf("Invalid Input!");
         return 1;
     }

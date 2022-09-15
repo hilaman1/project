@@ -18,7 +18,6 @@ typedef struct
 } cluster;
 
 
-
 double* convert_Py_to_C_array(PyObject *py_points, int n, int d){
     /* converts numpy python array to 1-D C array */
     PyObject *point, *index;
@@ -409,28 +408,19 @@ static PyObject* calc_W(PyObject *self, PyObject *args){
     
 
 static PyObject* kmeans(PyObject *self, PyObject *args){
-    PyObject *py_points, *py_centroids, *point, *centroid, *index, *py_centroinds2return, *py_centroid;
-    int d; /* the dimention of the given points */
-    int i, j; /* indices for iterating centroids */
-    int k; /* number of centroids to return */
-    int n; /* number of points to cluster; */
-    int max_iter; /* number of max iteration givenas input to python */
-    double *points; /* points to cluster */
+    PyObject *py_points, *py_centroids, *point, *centroid, *index, *py_centroinds2return;
+    int d; 
+    int i, j; 
+    int k; 
+    int n; 
+    int max_iter; 
+    double *points; 
     double **centroids, **centroids_after_kmeans;
     double epsilon;
     int casting2double_flag; /* flag to check if casting failed */
 
     casting2double_flag = 0;
 
-    /* checking if the input is valid */
-    /*
-    The PyArg_ParseTuple function allows you to cast directly to a Python object subtype using the format string "O!"
-     (notice-this is different than just plain "O").
-
-     "OOiiiid" -> the types of objects we expect: 2xobjects, 4xint, 1xdouble
-
-     If the argument does not match the specified PyObject type, it will throw a TypeError
-    */
     if (!PyArg_ParseTuple(args, "OOiiiid", &py_points, &py_centroids, &max_iter, &n, &d, &k, &epsilon))
         return NULL;
     if (!PyList_Check(py_centroids)) /* Return true if py_centroids is a list object or an instance of a subtype of the list type. This function always succeeds. */
@@ -438,8 +428,7 @@ static PyObject* kmeans(PyObject *self, PyObject *args){
     if (!PyList_Check(py_points))
         return NULL;
 
-    /* allocate space for points */
-    points = (double*) calloc(d*n, sizeof(double));
+    points = (double*) calloc(n * d, sizeof(double));
     if(points == NULL){
         printf("An Error Has Occurred");
         return NULL;
@@ -447,7 +436,7 @@ static PyObject* kmeans(PyObject *self, PyObject *args){
 
     /* get input points from python */
     for (i = 0; i < n; i++) {
-        point = PyList_GetItem(py_points, i); /* Return the object at position index in the list pointed to by list */
+        point = PyList_GetItem(py_points, i); 
         if (!PyList_Check(point)){
             continue;
         }
@@ -455,9 +444,6 @@ static PyObject* kmeans(PyObject *self, PyObject *args){
         for (j = 0; j < d; j++) {
             index = PyList_GetItem(point, j);
             points[i*d + j] = PyFloat_AsDouble(index);
-            /* Return a C double representation of the contents of pyfloat. If pyfloat is not a Python floating point object but has a __float__() method,
-             this method will first be called to convert pyfloat into a float. If __float__() is not defined then it falls back to __index__().
-              This method returns -1.0 upon failure, so one should call PyErr_Occurred() to check for errors. */
             if (PyErr_Occurred() && points[d*i + j]  == -1.0){
                 casting2double_flag = 1;
                 break;
@@ -468,13 +454,12 @@ static PyObject* kmeans(PyObject *self, PyObject *args){
         }
     }
 
-    /* allocate 2-D array space */
     centroids = (double **)calloc(k, sizeof(double *));
     if(centroids==NULL){
         printf("An Error Has Occurred");
         return NULL;
     }
-    /* initialize */
+
     for (i = 0; i < k; i++){
         centroids[i] = (double *)calloc(d, sizeof(double));
         if(centroids[i] == NULL){
@@ -483,6 +468,7 @@ static PyObject* kmeans(PyObject *self, PyObject *args){
         }
     }
 
+    
     /* get first k centroids from python */
     for (i = 0; i < k; i++) {
         centroid = PyList_GetItem(py_centroids, i);
@@ -509,41 +495,19 @@ static PyObject* kmeans(PyObject *self, PyObject *args){
     centroids_after_kmeans = NULL;
     if (casting2double_flag == 0){
         centroids_after_kmeans = kmeanspp(points, centroids, n, d, k, max_iter, epsilon);
-        if (centroids_after_kmeans == NULL)
-        {
+        if (centroids_after_kmeans == NULL){
             return NULL;
         }
     }
 
-    py_centroinds2return = PyList_New(k); /* Return a new list of length k on success, or NULL on failure. */
-    if (py_centroinds2return == NULL)
-        return NULL;
-    for (i = 0; i < k; i++)
-    {
-        py_centroid = PyList_New(d); /* Return a new list of length d on success, or NULL on failure. */
-        if (py_centroid == NULL)
-            return NULL;
-        for (j = 0; j < d; j++)
-        {
-            PyList_SET_ITEM(py_centroid, j, Py_BuildValue("d", centroids_after_kmeans[i][j]));
-            /* Macro form of PyList_SetItem() without error checking. This is normally only used to fill in new lists where there is no previous content.
-            Py_BuildValue - Create a new value based on a format string similar to those accepted by the PyArg_Parse*.
-            this line saves the centroid as a double value as python object */
-        }
-        PyList_SetItem(py_centroinds2return, i, Py_BuildValue("O", py_centroid)); /* "O" -> make sure it's an object */
-    }
+    py_centroinds2return = convert_C_to_Py_mat(centroids_after_kmeans, k, d);
     free(points);
-     /* 2-D array needs to free each cell in each array */
-    for (i = 0 ; i < k ; i++){
-        free(centroids[i]);
-    }
-    free(centroids);
+    free_mat(centroids, k);
     
     return py_centroinds2return;
 }
 
-static PyObject* calc_T(PyObject *self, PyObject *args)
-{
+static PyObject* calc_T(PyObject *self, PyObject *args){
     PyObject *py_points, *py_T_mat_2return;
 
     int n, d, k, i;
@@ -580,7 +544,6 @@ static PyObject* calc_T(PyObject *self, PyObject *args)
         return NULL;
     }
 
-
     eigenvalus_mat = eigen[0];
     eigenvectors_mat = eigen[1];
 
@@ -616,6 +579,7 @@ static PyObject* calc_T(PyObject *self, PyObject *args)
         free(eigenvectors_lst[i].eigenvector);
     }
     free(eigenvectors_lst);
+
     return py_T_mat_2return;
 }
 
@@ -625,11 +589,9 @@ static PyObject* calc_T(PyObject *self, PyObject *args)
 
 /* define the module in order to be able to import from python */
 
-/*
- * The module definition struct, which holds all information needed to create a module object.
- * There is usually only one statically initialized variable of this type for each module.
- */
-
+/* This function must be registered with the interpreter using the METH_VARARGS flag;
+ this is described in section The Module's Method Table and Initialization Function.
+ PyDoc_STR - The docstring for the function */
 static PyMethodDef spkmeansMethods[] = {
         {"apply_Jacobi_py", (PyCFunction) apply_Jacobi_py, METH_VARARGS, PyDoc_STR("aplying Jacobis algorithms and returns eigenvalues and eigenvectors of a given matrix")},
         {"calc_T", (PyCFunction) calc_T, METH_VARARGS, PyDoc_STR("calc T matrix for spkmeans algorithm implementation")},
@@ -639,10 +601,6 @@ static PyMethodDef spkmeansMethods[] = {
         {"kmeans", (PyCFunction) kmeans, METH_VARARGS, PyDoc_STR("apply kmeans algorithm")},
         {NULL, NULL, 0, NULL}
         };
-
-/* This function must be registered with the interpreter using the METH_VARARGS flag;
- this is described in section The Module's Method Table and Initialization Function.
- PyDoc_STR - The docstring for the function */
 
 
 static struct PyModuleDef moduledef = {
